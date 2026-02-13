@@ -1,5 +1,5 @@
 def water_plants(plant_list: list[str]) -> None:
-    print("Opening watering system...")
+    print("Opening watering system")
     try:
         for i in plant_list:
             if not isinstance(i, str):
@@ -17,6 +17,7 @@ def test_watering_system() -> None:
     print("Testing normal watering...")
     water_plants(good_plants)
     print("Watering completed successfully!\n")
+    print("Testing with error...")
     water_plants(bad_plants)
     print("\nCleanup always happens, even with errors!")
 
