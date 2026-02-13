@@ -18,8 +18,7 @@ class FloweringPlant(Plant):
         self.status = status
 
     def __repr__(self):
-        return (F"{self.name}: {self.height}cm, "
-                F"{self.color} flowers {self.status}")
+        return f"{super().__repr__()}, {self.color} flowers {self.status}"
 
 
 class PrizeFlower(FloweringPlant):
@@ -28,9 +27,7 @@ class PrizeFlower(FloweringPlant):
         self.points = point
 
     def __repr__(self):
-        return (F"{self.name}: {self.height}cm, "
-                F"{self.color} flowers {self.status}, "
-                F"Prize points: {self.points}")
+        return f"{super().__repr__()}, Prize points: {self.points}"
 
 
 class GardenManager:
@@ -82,6 +79,7 @@ class GardenManager:
         network.gardens["Bob"] = []
         cuc = PrizeFlower("Cucumber", 10, "White", "Blooming", 92)
         network.gardens["Bob"].append(cuc)
+        network.stats.add_plant("Bob", cuc)
         return network
 
     def help_grow(self, owner: str):
@@ -89,9 +87,9 @@ class GardenManager:
             print("There is no garden with this owner")
             return
         print(F"{owner}'s is helping all plants grow...")
-        for i in self.gardens["Alice"]:
+        for i in self.gardens[owner]:
             i.grow()
-        self.stats.add_grow("Alice")
+        self.stats.add_grow(owner)
 
     def report(self, owner: str):
         if owner not in self.gardens:
@@ -112,6 +110,11 @@ class GardenManager:
               F" {prize} prize flowers")
 
     def common_info(self):
+        for owner, garden in self.gardens.items():
+            for plant in garden:
+                if not self.validate_height(plant.height):
+                    print("Height validation test: False")
+                    return
         print("Height validation test: True")
         print("Garden scores - ", end='')
         score_parts = []
@@ -122,6 +125,10 @@ class GardenManager:
                     total_score += plant.points
             score_parts.append(f"{owner}: {total_score}")
         print(f"Garden scores - {', '.join(score_parts)}")
+
+    @staticmethod
+    def validate_height(height):
+        return height > 0
 
 
 def main():

@@ -1,9 +1,9 @@
 if __name__ == "__main__":
-    Plant = "Rose"
-    Height = 25
-    Age = 30
+    name = "Rose"
+    height = 25
+    age = 30
     print("=== Welcome to My Garden ===")
-    print(F"Plant: {Plant}")
-    print(F"Height: {Height}cm")
-    print(F"Age: {Age} days\n")
+    print(F"Plant: {name}")
+    print(F"Height: {height}cm")
+    print(F"Age: {age} days\n")
     print("=== End of Program ===")
