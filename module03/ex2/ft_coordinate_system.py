@@ -7,7 +7,7 @@ def distance(pos1: tuple, pos2: tuple) -> float:
     return math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
 
 
-def unpacking(player: tuple, coordinates: tuple):
+def unpacking(player: tuple, coordinates: tuple) -> None:
     print("Unpacking demonstration:")
     x1, y1, z1 = player
     x2, y2, z2 = coordinates
