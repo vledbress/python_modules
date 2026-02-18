@@ -25,7 +25,11 @@ print("Active players:", active_players)
 print()
 
 
-player_scores = {players[i]: scores[i] for i in range(len(players))}
+player_scores = {
+    player: scores[players.index(player)]
+    for player in active_players
+}
+
 score_categories = {
     'high': sum(1 for s in scores if s > 2000),
     'medium': sum(1 for s in scores if 1500 <= s <= 2000),
