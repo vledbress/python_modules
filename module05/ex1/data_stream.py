@@ -244,8 +244,6 @@ def main():
     print("Processing mixed stream types through unified interface...")
     print("Batch 1 Results:")
 
-    # Используем батчи, которые могут дать нужные "critical" результаты
-    # В примере критические: 2 sensor alerts, 1 large transaction, 3 events
     mixed_batches = [
         ["temp:35", "temp:10"],              # SensorStream (2 critical)
         ["buy:200", "buy:50", "sell:150", "buy:75"],
