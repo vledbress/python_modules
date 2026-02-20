@@ -166,29 +166,94 @@ class EventStream(DataStream):
 
 class StreamProcessor:
     def __init__(self):
-        self.streams: List[DataStream] = []
+        self.streams: list[DataStream] = []
+        self.filtered_summary: list[str] = []
 
-    def add_stream(self, stream: DataStream) -> None:
+    def add_stream(self, stream: DataStream):
+        """Добавить поток в процессор"""
         self.streams.append(stream)
+
+    def process_mixed_batches(self, batches: list[list[str]]):
+        """
+        batches: список батчей для потоков, порядок соответствует self.streams
+        """
+        self.filtered_summary.clear()
+
+        # Проходим по индексам потоков
+        for i in range(len(self.streams)):
+            stream = self.streams[i]
+            batch = batches[i]
+
+            # Фильтрация критических данных
+            critical_batch = stream.filter_data(batch, criteria="critical")
+
+            # Обработка батча (обновляет processed_count и stats)
+            _ = stream.process_batch(batch)
+
+            # Счётчик критических элементов для отчёта
+            count = len(critical_batch)
+
+            # Формируем строку отчёта по типу потока
+            if isinstance(stream, SensorStream):
+                print(f"- Sensor data: {len(batch)} readings processed")
+                self.filtered_summary.append(f"{count} critical sensor alerts")
+            elif isinstance(stream, TransactionStream):
+                print(f"- Transaction data: {len(batch)} operations processed")
+                self.filtered_summary.append(f"{count} large transactions")
+            elif isinstance(stream, EventStream):
+                print(f"- Event data: {len(batch)} events processed")
+                self.filtered_summary.append(f"{count} error events")
+
+        # Финальный отчёт
+        print("Stream filtering active: High-priority data only")
+        print("Filtered results:", ", ".join(self.filtered_summary))
 
 
 def main():
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===\n")
 
+    # === Инициализация потоков ===
     ss = SensorStream("SENSOR_001")
-    data_batch = ["temp:22.5", "humidity:65", "pressure:1013"]
-    print(f"Processing sensor batch: {data_batch}")
-    print(ss.process_batch(data_batch))
+    print("Initializing Sensor Stream...")
+    print(f"Stream ID: {ss.stream_id}, Type: {ss.stream_type}")
+    sensor_batch = ["temp:22.5", "humidity:65", "pressure:1013"]
+    print(f"Processing sensor batch: {sensor_batch}")
+    print(ss.process_batch(sensor_batch))  # avg temp: 22.5°C
 
-    data_batch = ["buy:100", "sell:150", "buy:75"]
     ts = TransactionStream("TRANS_001")
-    print(f"Processing sensor batch: {data_batch}")
-    print(ts.process_batch(data_batch))
+    print("\nInitializing Transaction Stream...")
+    print(f"Stream ID: {ts.stream_id}, Type: {ts.stream_type}")
+    transaction_batch = ["buy:100", "sell:150", "buy:75"]
+    print(f"Processing transaction batch: {transaction_batch}")
+    print(ts.process_batch(transaction_batch))  # net flow: +25 units
 
     es = EventStream("EVENT_001")
-    data_batch = ["login", "error", "logout"]
-    print(f"Processing sensor batch: {data_batch}")
-    print(es.process_batch(data_batch))
+    print("\nInitializing Event Stream...")
+    print(f"Stream ID: {es.stream_id}, Type: {es.stream_type}")
+    event_batch = ["login", "error", "logout"]
+    print(f"Processing event batch: {event_batch}")
+    print(es.process_batch(event_batch))  # 1 error detected
+
+    # === Polymorphic Stream Processing ===
+    processor = StreamProcessor()
+    processor.add_stream(ss)
+    processor.add_stream(ts)
+    processor.add_stream(es)
+
+    print("\n=== Polymorphic Stream Processing ===")
+    print("Processing mixed stream types through unified interface...")
+    print("Batch 1 Results:")
+
+    # Используем батчи, которые могут дать нужные "critical" результаты
+    # В примере критические: 2 sensor alerts, 1 large transaction, 3 events
+    mixed_batches = [
+        ["temp:35", "temp:10"],              # SensorStream (2 critical)
+        ["buy:200", "buy:50", "sell:150", "buy:75"],  # TransactionStream (1 large)
+        ["login", "error", "logout"]         # EventStream (1 error)
+    ]
+    processor.process_mixed_batches(mixed_batches)
+
+    print("All streams processed successfully. Nexus throughput optimal.")
 
 
 if __name__ == "__main__":
