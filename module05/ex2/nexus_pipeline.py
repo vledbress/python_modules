@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional, Dict, Union
+from typing import Any, List, Optional, Dict, Union, Protocol
+
+
+class Stage(Protocol):
+    def process(self, data: Any) -> Any:
+        ...
 
 
 class InputStage:
@@ -16,10 +21,14 @@ class OutputStage:
 
 class ProcessingPipeline(ABC):
     def __init__(self):
-        self.stages: List = []
+        self.stages: List[Stage] = []
+        self.pipeline_id: str
 
-    def add_stage(self, stage: Union[InputStage, TransformStage, OutputStage]):
+    def add_stage(self, stage: Union[Stage]):
         self.stages.append(stage)
+
+    def process(self, data: Any) -> Any:
+        pass
 
 
 class JSONAdapter(ProcessingPipeline):
@@ -39,5 +48,8 @@ class NexusManager:
         self.pipelines: List[ProcessingPipeline] = []
 
 
+def main():
+    print("Ilka pidor")
 
 
+main()
