@@ -57,7 +57,6 @@ class SensorStream(DataStream):
     def filter_data(self, data_batch: List[str], criteria: Optional[str]
                     = None) -> List[str]:
         """
-        Фильтруем данные по критичности:
         - criteria="critical": temp < 15 или temp > 30
         - criteria="normal" или None: остальные температуры
         """
@@ -109,7 +108,6 @@ class TransactionStream(DataStream):
     def filter_data(self, data_batch: List[str], criteria: Optional[str]
                     = None) -> List[str]:
         """
-        Фильтруем транзакции:
         - criteria="critical": buy/sell > 100
         - criteria="normal" или None: остальные
         """
@@ -153,7 +151,6 @@ class EventStream(DataStream):
     def filter_data(self, data_batch: List[str], criteria: Optional[str]
                     = None) -> List[str]:
         """
-        Фильтруем события:
         - criteria="critical": только 'error'
         - criteria="normal" или None: все остальные события
         """
@@ -170,30 +167,20 @@ class StreamProcessor:
         self.filtered_summary: list[str] = []
 
     def add_stream(self, stream: DataStream):
-        """Добавить поток в процессор"""
+        """Add stream"""
         self.streams.append(stream)
 
     def process_mixed_batches(self, batches: list[list[str]]):
         """
-        batches: список батчей для потоков, порядок соответствует self.streams
+        process batches
         """
         self.filtered_summary.clear()
-
-        # Проходим по индексам потоков
         for i in range(len(self.streams)):
             stream = self.streams[i]
             batch = batches[i]
-
-            # Фильтрация критических данных
             critical_batch = stream.filter_data(batch, criteria="critical")
-
-            # Обработка батча (обновляет processed_count и stats)
             stream.process_batch(batch)
-
-            # Счётчик критических элементов для отчёта
             count = len(critical_batch)
-
-            # Формируем строку отчёта по типу потока
             if isinstance(stream, SensorStream):
                 print(f"- Sensor data: {len(batch)} readings processed")
                 self.filtered_summary.append(f"{count} critical sensor alerts")
@@ -203,8 +190,6 @@ class StreamProcessor:
             elif isinstance(stream, EventStream):
                 print(f"- Event data: {len(batch)} events processed")
                 self.filtered_summary.append(f"{count} error events")
-
-        # Финальный отчёт
         print("Stream filtering active: High-priority data only")
         print("Filtered results:", ", ".join(self.filtered_summary))
 
@@ -212,29 +197,27 @@ class StreamProcessor:
 def main():
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===\n")
 
-    # === Инициализация потоков ===
     ss = SensorStream("SENSOR_001")
     print("Initializing Sensor Stream...")
     print(f"Stream ID: {ss.stream_id}, Type: {ss.stream_type}")
     sensor_batch = ["temp:22.5", "humidity:65", "pressure:1013"]
     print(f"Processing sensor batch: {sensor_batch}")
-    print(ss.process_batch(sensor_batch))  # avg temp: 22.5°C
+    print(ss.process_batch(sensor_batch))
 
     ts = TransactionStream("TRANS_001")
     print("\nInitializing Transaction Stream...")
     print(f"Stream ID: {ts.stream_id}, Type: {ts.stream_type}")
     transaction_batch = ["buy:100", "sell:150", "buy:75"]
     print(f"Processing transaction batch: {transaction_batch}")
-    print(ts.process_batch(transaction_batch))  # net flow: +25 units
+    print(ts.process_batch(transaction_batch))
 
     es = EventStream("EVENT_001")
     print("\nInitializing Event Stream...")
     print(f"Stream ID: {es.stream_id}, Type: {es.stream_type}")
     event_batch = ["login", "error", "logout"]
     print(f"Processing event batch: {event_batch}")
-    print(es.process_batch(event_batch))  # 1 error detected
+    print(es.process_batch(event_batch))
 
-    # === Polymorphic Stream Processing ===
     processor = StreamProcessor()
     processor.add_stream(ss)
     processor.add_stream(ts)
@@ -245,12 +228,11 @@ def main():
     print("Batch 1 Results:")
 
     mixed_batches = [
-        ["temp:35", "temp:10"],              # SensorStream (2 critical)
+        ["temp:35", "temp:10"],
         ["buy:200", "buy:50", "sell:150", "buy:75"],
-        ["login", "error", "logout"]         # EventStream (1 error)
+        ["login", "error", "logout"]
     ]
     processor.process_mixed_batches(mixed_batches)
-
     print("All streams processed successfully. Nexus throughput optimal.")
 
 
