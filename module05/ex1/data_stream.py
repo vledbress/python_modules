@@ -3,35 +3,48 @@ from typing import Any, List, Optional, Dict, Union
 
 
 class DataStream(ABC):
+    """
+    Abstract base class representing a generic data stream.
+    """
+
     def __init__(self, stream_id: str, stream_type: str):
-        """initialization"""
+        """Initialize the data stream with an ID and type."""
         self.stream_id = stream_id
         self.stream_type = stream_type
         self.processed_count = 0
 
     @abstractmethod
     def process_batch(self, data_batch: List[Any]) -> str:
-        """Process a batch of data"""
+        """Process a batch of data. Must be implemented by subclasses."""
         pass
 
-    def filter_data(self, data_batch: List[Any], criteria: Optional[str]
-                    = None) -> List[Any]:
-        """Filter data based on criteria"""
+    def filter_data(
+        self, data_batch: List[Any], criteria: Optional[str] = None
+    ) -> List[Any]:
+        """Filter data based on specific criteria."""
         return data_batch
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
-        """Return stream statistics"""
-        return {"stream_id": self.stream_id,
-                "stream_type": self.stream_type,
-                "processed_count": self.processed_count}
+        """Return stream statistics including ID and processed count."""
+        return {
+            "stream_id": self.stream_id,
+            "stream_type": self.stream_type,
+            "processed_count": self.processed_count,
+        }
 
 
 class SensorStream(DataStream):
+    """
+    Data stream implementation for environmental sensor data.
+    """
+
     def __init__(self, stream_id: str):
+        """Initialize the sensor stream and set avg temperature to zero."""
         super().__init__(stream_id, "Environmental Data")
         self.avg_temp: float = 0.0
 
     def process_batch(self, data_batch: List[str]) -> str:
+        """Parse temperature readings and calculate the average."""
         temps = []
         for item in data_batch:
             pair = item.split(":")
@@ -46,19 +59,23 @@ class SensorStream(DataStream):
             self.avg_temp = 0.0
 
         self.processed_count += len(data_batch)
-        return (f"Sensor analysis: {self.processed_count} readings processed,"
-                f"avg temp: {self.avg_temp:.1f}°C")
+        return (
+            f"Sensor analysis: {self.processed_count} readings processed,"
+            f"avg temp: {self.avg_temp:.1f}°C"
+        )
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
+        """Return sensor-specific statistics."""
         base = super().get_stats()
         base["avg_temp"] = self.avg_temp
         return base
 
-    def filter_data(self, data_batch: List[str], criteria: Optional[str]
-                    = None) -> List[str]:
+    def filter_data(
+        self, data_batch: List[str], criteria: Optional[str] = None
+    ) -> List[str]:
         """
-        - criteria="critical": temp < 15 или temp > 30
-        - criteria="normal" или None: остальные температуры
+        Filter sensor data.
+        Criteria='critical': temp < 15 or temp > 30.
         """
         critical, normal = [], []
         for item in data_batch:
@@ -79,11 +96,17 @@ class SensorStream(DataStream):
 
 
 class TransactionStream(DataStream):
-    def __init__(self, stream_id: int):
+    """
+    Data stream implementation for financial transactions.
+    """
+
+    def __init__(self, stream_id: str):
+        """Initialize the transaction stream and set net flow to zero."""
         super().__init__(stream_id, "Financial Data")
         self.netflow = 0
 
     def process_batch(self, data_batch: List[str]) -> str:
+        """Calculate the net flow based on 'buy' and 'sell' operations."""
         for i in data_batch:
             pair = i.split(":")
             if pair[0] == 'buy':
@@ -97,28 +120,31 @@ class TransactionStream(DataStream):
         else:
             sign = ''
         self.processed_count += len(data_batch)
-        return (F"Transaction analysis: {self.processed_count} opearations,"
-                F" net flow: {sign}{self.netflow} units")
+        return (
+            f"Transaction analysis: {self.processed_count} operations,"
+            f" net flow: {sign}{self.netflow} units"
+        )
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
+        """Return financial statistics."""
         base = super().get_stats()
         base["netflow"] = self.netflow
         return base
 
-    def filter_data(self, data_batch: List[str], criteria: Optional[str]
-                    = None) -> List[str]:
+    def filter_data(
+        self, data_batch: List[str], criteria: Optional[str] = None
+    ) -> List[str]:
         """
-        - criteria="critical": buy/sell > 100
-        - criteria="normal" или None: остальные
+        Filter transactions.
+        Criteria='critical': amount > 100.
         """
         critical, normal = [], []
         for item in data_batch:
             pair = item.split(":")
             if len(pair) != 2:
                 continue
-            key, value = pair
             try:
-                amount = int(value)
+                amount = int(pair[1])
             except ValueError:
                 continue
             if amount > 100:
@@ -131,28 +157,38 @@ class TransactionStream(DataStream):
 
 
 class EventStream(DataStream):
+    """
+    Data stream implementation for system log events.
+    """
+
     def __init__(self, stream_id: str):
+        """Initialize the event stream and reset error counter."""
         super().__init__(stream_id, "System Events")
         self.errors = 0
 
     def process_batch(self, data_batch: List[str]) -> str:
+        """Count the number of 'error' events in the batch."""
         for i in data_batch:
             if i == "error":
                 self.errors += 1
         self.processed_count += len(data_batch)
-        return (F"Event analysis: {self.processed_count} events, "
-                F"{self.errors} error detected")
+        return (
+            f"Event analysis: {self.processed_count} events, "
+            f"{self.errors} error detected"
+        )
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
+        """Return event statistics."""
         base = super().get_stats()
         base["errors"] = self.errors
         return base
 
-    def filter_data(self, data_batch: List[str], criteria: Optional[str]
-                    = None) -> List[str]:
+    def filter_data(
+        self, data_batch: List[str], criteria: Optional[str] = None
+    ) -> List[str]:
         """
-        - criteria="critical": только 'error'
-        - criteria="normal" или None: все остальные события
+        Filter events.
+        Criteria='critical': only 'error' events.
         """
         critical = [item for item in data_batch if item == "error"]
         normal = [item for item in data_batch if item != "error"]
@@ -162,18 +198,21 @@ class EventStream(DataStream):
 
 
 class StreamProcessor:
+    """
+    Manager class to handle and process multiple data streams.
+    """
+
     def __init__(self):
+        """Initialize processor with empty streams and summary."""
         self.streams: list[DataStream] = []
         self.filtered_summary: list[str] = []
 
     def add_stream(self, stream: DataStream):
-        """Add stream"""
+        """Add a data stream to the processor."""
         self.streams.append(stream)
 
     def process_mixed_batches(self, batches: list[list[str]]):
-        """
-        process batches
-        """
+        """Process batches across different streams and print results."""
         self.filtered_summary.clear()
         for i in range(len(self.streams)):
             stream = self.streams[i]
@@ -195,6 +234,7 @@ class StreamProcessor:
 
 
 def main():
+    """Main execution point with original output format."""
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===\n")
 
     ss = SensorStream("SENSOR_001")
